@@ -7,23 +7,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Session ID is required' }, { status: 401 });
   }
 
-  const dummyCsrf = 'dummy_csrf_token_12345';
-
   try {
-    const response = await fetch('https://www.instagram.com/api/v1/direct_v2/inbox/?persistentBadging=true&folder=0&limit=10&thread_message_limit=10', {
+    const response = await fetch('https://i.instagram.com/api/v1/direct_v2/inbox/?persistentBadging=true&folder=0&limit=10', {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Instagram 219.0.0.12.117 Android',
         'X-IG-App-ID': '936619743392459',
-        'X-ASBD-ID': '129477',
-        'X-CSRFToken': dummyCsrf,
-        'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://www.instagram.com',
-        'Referer': 'https://www.instagram.com/direct/inbox/',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Cookie': `sessionid=${sessionId}; csrftoken=${dummyCsrf}`
-      }
+        'Cookie': `sessionid=${sessionId}`
+      },
+      redirect: 'manual' // Empêche fetch de planter en cas de boucle de redirection
     });
 
     if (!response.ok) {
