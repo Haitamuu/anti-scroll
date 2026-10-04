@@ -7,12 +7,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Session ID is required' }, { status: 401 });
   }
 
+  const dummyCsrf = 'dummy_csrf_token_12345';
+
   try {
     const response = await fetch('https://www.instagram.com/api/v1/feed/reels_tray/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'X-IG-App-ID': '936619743392459',
-        'Cookie': `sessionid=${sessionId}`
+        'X-ASBD-ID': '129477',
+        'X-CSRFToken': dummyCsrf,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Cookie': `sessionid=${sessionId}; csrftoken=${dummyCsrf}`
       }
     });
 

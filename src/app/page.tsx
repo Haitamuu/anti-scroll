@@ -50,8 +50,11 @@ export default function Home() {
         headers: { "x-ig-session": sessionId },
       });
       const data = await res.json();
-      if (res.ok) setMessages(data);
-      else setError(data.error || "Erreur lors de la récupération des messages");
+      if (res.ok) {
+        setMessages(data);
+      } else {
+        setError(`Erreur: ${data.error} - ${data.details || ''}`);
+      }
     } catch (err) {
       setError("Erreur réseau");
     }
@@ -66,8 +69,11 @@ export default function Home() {
         headers: { "x-ig-session": sessionId },
       });
       const data = await res.json();
-      if (res.ok) setStories(data);
-      else setError(data.error || "Erreur lors de la récupération des stories");
+      if (res.ok) {
+        setStories(data);
+      } else {
+        setError(`Erreur: ${data.error} - ${data.details || ''}`);
+      }
     } catch (err) {
       setError("Erreur réseau");
     }
@@ -80,7 +86,7 @@ export default function Home() {
         <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
           <h1 className="text-3xl font-bold text-center text-pink-600 mb-6">InstaFocus</h1>
           <p className="text-gray-500 mb-6 text-sm text-center">
-            Connectez-vous en utilisant votre <b>sessionid</b> Instagram pour voir vos messages et stories sans le feed.
+            Connectez-vous en utilisant votre <b>sessionid</b> Instagram.
           </p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -105,7 +111,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
         <h1 className="text-xl font-bold text-pink-600">InstaFocus</h1>
         <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-800">
@@ -113,7 +118,6 @@ export default function Home() {
         </button>
       </header>
 
-      {/* Tabs */}
       <div className="flex bg-white border-b border-gray-200">
         <button
           onClick={() => setActiveTab("messages")}
@@ -133,12 +137,14 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Content */}
       <main className="flex-1 overflow-y-auto p-4">
         {loading && <p className="text-center text-gray-500 mt-4">Chargement...</p>}
-        {error && <p className="text-center text-red-500 mt-4">{error}</p>}
+        {error && (
+          <div className="bg-red-50 text-red-600 p-4 rounded-md mt-4 text-xs font-mono break-all whitespace-pre-wrap">
+            {error}
+          </div>
+        )}
         
-        {/* Messages View */}
         {activeTab === "messages" && messages?.inbox?.threads && (
           <div className="space-y-4">
             {messages.inbox.threads.map((thread: any) => (
@@ -147,6 +153,7 @@ export default function Home() {
                   src={thread.users[0]?.profile_pic_url || "/default-avatar.png"}
                   alt="avatar"
                   className="w-12 h-12 rounded-full mr-4 bg-gray-200"
+                  referrerPolicy="no-referrer"
                 />
                 <div className="flex-1 overflow-hidden">
                   <h3 className="font-semibold text-gray-900 truncate">
@@ -161,7 +168,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Stories View */}
         {activeTab === "stories" && stories?.tray && (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
             {stories.tray.map((story: any) => (
@@ -171,6 +177,7 @@ export default function Home() {
                     src={story.user?.profile_pic_url || "/default-avatar.png"}
                     alt="avatar"
                     className="w-full h-full rounded-full border-2 border-white object-cover bg-white"
+                    referrerPolicy="no-referrer"
                   />
                 </div>
                 <span className="text-xs text-gray-700 truncate w-full text-center">
