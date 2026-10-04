@@ -8,20 +8,22 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch('https://i.instagram.com/api/v1/feed/reels_tray/', {
+    const response = await fetch('https://www.instagram.com/api/v1/feed/reels_tray/', {
       headers: {
-        'User-Agent': 'Instagram 219.0.0.12.117 Android',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'X-IG-App-ID': '936619743392459',
         'Cookie': `sessionid=${sessionId}`
       }
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch stories' }, { status: response.status });
+      const text = await response.text();
+      return NextResponse.json({ error: `Erreur IG ${response.status}`, details: text }, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
   }
 }
