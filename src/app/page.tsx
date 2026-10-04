@@ -5,13 +5,10 @@ import { useState, useEffect } from "react";
 export default function Home() {
   const [sessionId, setSessionId] = useState("");
   const [isLogged, setIsLogged] = useState(false);
-  const [activeTab, setActiveTab] = useState("messages");
-  const [messages, setMessages] = useState<any>(null);
   const [stories, setStories] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Nouveau state pour la story : on stocke tous les items et l'index actuel
   const [selectedStory, setSelectedStory] = useState<{user: any, items: any[], currentIndex: number} | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
 
@@ -24,11 +21,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (isLogged) {
-      if (activeTab === "messages" && !messages) fetchMessages();
-      if (activeTab === "stories" && !stories) fetchStories();
+    if (isLogged && !stories) {
+      fetchStories();
     }
-  }, [activeTab, isLogged]);
+  }, [isLogged]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,27 +38,7 @@ export default function Home() {
     localStorage.removeItem("ig_sessionid");
     setSessionId("");
     setIsLogged(false);
-    setMessages(null);
     setStories(null);
-  };
-
-  const fetchMessages = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/messages", {
-        headers: { "x-ig-session": sessionId },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessages(data);
-      } else {
-        setError(`Erreur Messages: ${data.error} - ${data.details || ''}`);
-      }
-    } catch (err) {
-      setError("Erreur réseau");
-    }
-    setLoading(false);
   };
 
   const fetchStories = async () => {
@@ -76,7 +52,7 @@ export default function Home() {
       if (res.ok) {
         setStories(data);
       } else {
-        setError(`Erreur Stories: ${data.error} - ${data.details || ''}`);
+        setError(`Erreur: ${data.error} - ${data.details || ''}`);
       }
     } catch (err) {
       setError("Erreur réseau");
@@ -93,7 +69,7 @@ export default function Home() {
       const data = await res.json();
       
       if (!res.ok) {
-        alert("Erreur Instagram lors du chargement des photos/vidéos de la story : " + JSON.stringify(data));
+        alert("Erreur serveur : " + JSON.stringify(data));
       } else if (data.reels && data.reels[story.id] && data.reels[story.id].items.length > 0) {
         const items = data.reels[story.id].items;
         let startIndex = 0;
@@ -105,7 +81,7 @@ export default function Home() {
         }
         setSelectedStory({ user: story.user, items: items, currentIndex: startIndex });
       } else {
-        alert("Structure inattendue ou vide : " + JSON.stringify(data).substring(0, 300));
+        alert("Cette story est vide ou a expiré.");
       }
     } catch (err) {
       alert("Erreur de connexion pour charger la story.");
@@ -131,41 +107,43 @@ export default function Home() {
     if (selectedStory) {
       if (selectedStory.currentIndex > 0) {
         setSelectedStory({ ...selectedStory, currentIndex: selectedStory.currentIndex - 1 });
+      } else {
+        // Optionnel : fermer si on est à la première et qu'on clique à gauche
+        closeStory();
       }
     }
   };
 
   const handleLike = () => {
-    alert("Fonctionnalité 'J'aime' en cours de développement (nécessite une API POST spéciale)");
+    alert("Bientôt disponible...");
   };
 
   const handleReply = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Fonctionnalité 'Répondre' en cours de développement (nécessite une API POST spéciale)");
+    alert("Bientôt disponible...");
   };
 
   if (!isLogged) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black p-4 text-white">
-        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-lg w-full max-w-md">
-          <h1 className="text-3xl font-bold text-center text-white mb-6 font-serif italic">InstaFocus</h1>
-          <p className="text-zinc-400 mb-6 text-sm text-center">
-            Connectez-vous avec votre <b>sessionid</b> pour accéder à vos messages sans le feed.
+      <div className="min-h-[100dvh] flex items-center justify-center bg-black p-4 text-white">
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-lg w-full max-w-sm">
+          <h1 className="text-4xl font-bold text-center text-white mb-2 font-serif italic">InstaFocus</h1>
+          <p className="text-zinc-400 mb-8 text-sm text-center">
+            Vos Stories, sans distractions.
           </p>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-zinc-300">Cookie sessionid</label>
               <input
                 type="password"
                 value={sessionId}
                 onChange={(e) => setSessionId(e.target.value)}
-                className="mt-1 block w-full rounded-md bg-zinc-800 border-zinc-700 text-white shadow-sm p-3 focus:border-white focus:ring-white"
-                placeholder="Ex: 12345678%3A..."
+                className="block w-full rounded-lg bg-zinc-800 border-zinc-700 text-white shadow-sm p-4 text-base focus:border-white focus:ring-white outline-none"
+                placeholder="Cookie sessionid"
                 required
               />
             </div>
-            <button type="submit" className="w-full bg-white text-black p-3 rounded-md font-bold hover:bg-gray-200 transition-colors">
-              Se connecter
+            <button type="submit" className="w-full bg-white text-black p-4 rounded-lg font-bold text-lg active:scale-95 transition-transform">
+              Connexion
             </button>
           </form>
         </div>
@@ -174,82 +152,51 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white relative">
-      <header className="bg-black border-b border-zinc-800 p-4 flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-white font-serif italic">InstaFocus</h1>
-        <button onClick={handleLogout} className="text-sm text-zinc-400 hover:text-white transition-colors">
-          Déconnexion
+    <div className="flex flex-col h-[100dvh] bg-black text-white relative">
+      <header className="bg-black pt-safe px-4 py-3 flex justify-between items-center sticky top-0 z-10">
+        <h1 className="text-2xl font-bold text-white font-serif italic">InstaFocus</h1>
+        <button onClick={handleLogout} className="text-sm font-semibold text-zinc-400 active:text-white">
+          Quitter
         </button>
       </header>
 
-      <div className="flex bg-black border-b border-zinc-800">
-        <button
-          onClick={() => setActiveTab("messages")}
-          className={`flex-1 py-3 text-center font-semibold text-sm transition-colors ${
-            activeTab === "messages" ? "border-b-2 border-white text-white" : "text-zinc-500"
-          }`}
-        >
-          Messages
-        </button>
-        <button
-          onClick={() => setActiveTab("stories")}
-          className={`flex-1 py-3 text-center font-semibold text-sm transition-colors ${
-            activeTab === "stories" ? "border-b-2 border-white text-white" : "text-zinc-500"
-          }`}
-        >
-          Stories
-        </button>
-      </div>
-
-      <main className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-center text-zinc-500 mt-4">Chargement...</p>}
-        {error && (
-          <div className="bg-red-900/50 border border-red-800 text-red-200 p-4 rounded-md mt-4 text-xs font-mono break-all whitespace-pre-wrap">
-            {error}
+      <main className="flex-1 overflow-y-auto pb-safe scrollbar-hide">
+        {loading && (
+          <div className="flex justify-center mt-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           </div>
         )}
         
-        {activeTab === "messages" && messages?.inbox?.threads && (
-          <div className="space-y-4">
-            {messages.inbox.threads.map((thread: any) => (
-              <div key={thread.thread_id} className="flex items-center p-3 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
-                <img
-                  src={thread.users[0]?.profile_pic_url || "/default-avatar.png"}
-                  alt="avatar"
-                  className="w-14 h-14 rounded-full mr-4 bg-zinc-800 border border-zinc-700"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="flex-1 overflow-hidden">
-                  <h3 className="font-semibold text-white truncate">
-                    {thread.thread_title || thread.users[0]?.username}
-                  </h3>
-                  <p className={`text-sm truncate mt-1 ${thread.read_state ? 'text-zinc-500' : 'text-white font-bold'}`}>
-                    {thread.last_permanent_item?.text || "Nouveau message"}
-                  </p>
-                </div>
-              </div>
-            ))}
+        {error && (
+          <div className="bg-red-900/50 text-red-200 p-4 m-4 rounded-lg text-xs font-mono break-all whitespace-pre-wrap">
+            {error}
           </div>
         )}
 
-        {activeTab === "stories" && stories?.tray && (
+        {stories?.tray && (
           <>
-            {storyLoading && <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center text-white">Chargement de la story...</div>}
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+            {storyLoading && (
+              <div className="fixed inset-0 z-40 bg-black/50 flex flex-col items-center justify-center text-white backdrop-blur-sm">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
+                <p className="font-semibold">Chargement...</p>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-2 gap-y-6 p-2 mt-2">
               {stories.tray.map((story: any) => {
                 const isSeen = story.seen >= story.latest_reel_media;
                 
                 return (
-                  <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center cursor-pointer">
-                    <div className={`w-16 h-16 rounded-full p-[2px] mb-1 hover:scale-105 transition-transform ${isSeen ? 'bg-zinc-700' : 'bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600'}`}>
+                  <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center active:scale-95 transition-transform select-none">
+                    <div className={`w-[72px] h-[72px] rounded-full p-[3px] mb-1 ${isSeen ? 'bg-zinc-700' : 'bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600'}`}>
                       <img
                         src={story.user?.profile_pic_url || "/default-avatar.png"}
                         alt="avatar"
-                        className="w-full h-full rounded-full border-2 border-black object-cover bg-zinc-800"
+                        className="w-full h-full rounded-full border-4 border-black object-cover bg-zinc-800"
                         referrerPolicy="no-referrer"
                       />
                     </div>
-                    <span className={`text-xs truncate w-full text-center mt-1 ${isSeen ? 'text-zinc-500' : 'text-zinc-300'}`}>
+                    <span className={`text-[11px] truncate w-full text-center px-1 ${isSeen ? 'text-zinc-500' : 'text-zinc-200'}`}>
                       {story.user?.username}
                     </span>
                   </div>
@@ -260,23 +207,23 @@ export default function Home() {
         )}
       </main>
 
-      {/* Modal Story Viewer (Style Instagram) */}
+      {/* Modal Story Viewer (Style Instagram Mobile) */}
       {selectedStory && selectedStory.items[selectedStory.currentIndex] && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black flex flex-col pt-safe pb-safe">
           
           {/* Barres de progression */}
-          <div className="absolute top-0 left-0 w-full z-20 flex space-x-1 p-2 pt-4">
+          <div className="absolute top-safe left-0 w-full z-20 flex space-x-1 px-2 pt-2">
             {selectedStory.items.map((_, idx) => (
-              <div key={idx} className="flex-1 h-1 bg-gray-600 rounded-full overflow-hidden">
+              <div key={idx} className="flex-1 h-[2px] bg-white/30 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full bg-white ${idx < selectedStory.currentIndex ? 'w-full' : idx === selectedStory.currentIndex ? 'w-1/2' : 'w-0'}`} 
+                  className={`h-full bg-white transition-all duration-200 ${idx < selectedStory.currentIndex ? 'w-full' : idx === selectedStory.currentIndex ? 'w-1/2' : 'w-0'}`} 
                 />
               </div>
             ))}
           </div>
 
           {/* En-tête (Utilisateur + Bouton fermer) */}
-          <div className="flex justify-between items-center p-4 absolute top-4 w-full z-20 bg-gradient-to-b from-black/60 to-transparent">
+          <div className="flex justify-between items-center p-4 absolute top-safe w-full z-20 bg-gradient-to-b from-black/60 to-transparent mt-2">
             <div className="flex items-center">
               <img 
                 src={selectedStory.user?.profile_pic_url} 
@@ -288,32 +235,33 @@ export default function Home() {
                 {Math.round((Date.now()/1000 - selectedStory.items[selectedStory.currentIndex].taken_at) / 3600)}h
               </span>
             </div>
-            <button onClick={closeStory} className="text-white text-3xl font-bold hover:text-gray-300 drop-shadow-md">
+            <button onClick={closeStory} className="text-white text-3xl font-bold active:text-gray-400 drop-shadow-md pl-4">
               &times;
             </button>
           </div>
           
           {/* Zones de clic invisibles pour naviguer */}
           <div className="absolute inset-0 z-10 flex">
-            <div className="w-1/3 h-full cursor-pointer" onClick={prevStoryItem} />
-            <div className="w-2/3 h-full cursor-pointer" onClick={nextStoryItem} />
+            <div className="w-[30%] h-full" onClick={prevStoryItem} />
+            <div className="w-[70%] h-full" onClick={nextStoryItem} />
           </div>
 
-          {/* Contenu de la story */}
-          <div className="flex-1 flex items-center justify-center bg-zinc-950 relative w-full h-full">
+          {/* Contenu de la story (Media pleine hauteur mobile) */}
+          <div className="flex-1 flex items-center justify-center bg-black relative w-full h-full overflow-hidden rounded-xl">
             {selectedStory.items[selectedStory.currentIndex].video_versions && selectedStory.items[selectedStory.currentIndex].video_versions.length > 0 ? (
               <video 
                 src={selectedStory.items[selectedStory.currentIndex].video_versions[0]?.url} 
-                className="max-h-full max-w-full object-contain pointer-events-none"
+                className="h-full w-full object-cover pointer-events-none"
                 autoPlay 
                 playsInline
+                muted={false}
                 referrerPolicy="no-referrer"
                 onEnded={nextStoryItem}
               />
             ) : (
               <img 
                 src={selectedStory.items[selectedStory.currentIndex].image_versions2?.candidates[0]?.url} 
-                className="max-h-full max-w-full object-contain pointer-events-none"
+                className="h-full w-full object-cover pointer-events-none"
                 alt="Story"
                 referrerPolicy="no-referrer"
               />
@@ -321,21 +269,21 @@ export default function Home() {
           </div>
 
           {/* Barre du bas : Répondre et Liker */}
-          <div className="absolute bottom-0 w-full p-4 z-20 bg-gradient-to-t from-black/80 to-transparent flex items-center space-x-4">
+          <div className="absolute bottom-safe w-full p-4 z-20 bg-gradient-to-t from-black/80 to-transparent flex items-center space-x-4 mb-2">
             <form onSubmit={handleReply} className="flex-1">
               <input 
                 type="text" 
-                placeholder={`Répondre à ${selectedStory.user?.username}...`}
-                className="w-full bg-transparent border border-white rounded-full py-2 px-4 text-white text-sm focus:outline-none focus:bg-zinc-900/50 transition-colors placeholder-gray-300"
+                placeholder={`Envoyer un message...`}
+                className="w-full bg-transparent border border-white/70 rounded-full py-3 px-5 text-white text-base focus:outline-none focus:border-white transition-colors placeholder-white/70 backdrop-blur-sm"
               />
             </form>
-            <button onClick={handleLike} className="text-white hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+            <button onClick={handleLike} className="text-white active:scale-75 transition-transform p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
             </button>
-            <button className="text-white hover:scale-110 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+            <button className="text-white active:scale-75 transition-transform p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 transform rotate-[-45deg] -translate-y-1">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
               </svg>
             </button>

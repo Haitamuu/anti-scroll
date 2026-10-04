@@ -3,4 +3,30 @@
 body {
   background-color: #000000;
   color: #ffffff;
+  /* Désactive la surbrillance bleue au tap sur iOS */
+  -webkit-tap-highlight-color: transparent;
+  /* Empêche le pull-to-refresh natif de casser l'expérience */
+  overscroll-behavior-y: none;
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .top-safe {
+    top: env(safe-area-inset-top);
+  }
+  .bottom-safe {
+    bottom: env(safe-area-inset-bottom);
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
