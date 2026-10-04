@@ -11,7 +11,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  const [selectedStory, setSelectedStory] = useState<any>(null);
+  // Nouveau state pour la story : on stocke tous les items et l'index actuel
+  const [selectedStory, setSelectedStory] = useState<{user: any, items: any[], currentIndex: number} | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
 
   useEffect(() => {
@@ -95,16 +96,15 @@ export default function Home() {
         alert("Erreur Instagram lors du chargement des photos/vidéos de la story : " + JSON.stringify(data));
       } else if (data.reels && data.reels[story.id] && data.reels[story.id].items.length > 0) {
         const items = data.reels[story.id].items;
-        let itemToShow = items[0];
+        let startIndex = 0;
         for (let i = 0; i < items.length; i++) {
           if (items[i].taken_at > story.seen) {
-            itemToShow = items[i];
+            startIndex = i;
             break;
           }
         }
-        setSelectedStory({ ...itemToShow, user: story.user });
+        setSelectedStory({ user: story.user, items: items, currentIndex: startIndex });
       } else {
-        // Affiche ce qu'Instagram a réellement renvoyé pour débugger
         alert("Structure inattendue ou vide : " + JSON.stringify(data).substring(0, 300));
       }
     } catch (err) {
@@ -115,6 +115,33 @@ export default function Home() {
 
   const closeStory = () => {
     setSelectedStory(null);
+  };
+
+  const nextStoryItem = () => {
+    if (selectedStory) {
+      if (selectedStory.currentIndex < selectedStory.items.length - 1) {
+        setSelectedStory({ ...selectedStory, currentIndex: selectedStory.currentIndex + 1 });
+      } else {
+        closeStory(); // Fin de la story
+      }
+    }
+  };
+
+  const prevStoryItem = () => {
+    if (selectedStory) {
+      if (selectedStory.currentIndex > 0) {
+        setSelectedStory({ ...selectedStory, currentIndex: selectedStory.currentIndex - 1 });
+      }
+    }
+  };
+
+  const handleLike = () => {
+    alert("Fonctionnalité 'J'aime' en cours de développement (nécessite une API POST spéciale)");
+  };
+
+  const handleReply = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert("Fonctionnalité 'Répondre' en cours de développement (nécessite une API POST spéciale)");
   };
 
   if (!isLogged) {
@@ -233,41 +260,85 @@ export default function Home() {
         )}
       </main>
 
-      {/* Modal Story Viewer */}
-      {selectedStory && (
+      {/* Modal Story Viewer (Style Instagram) */}
+      {selectedStory && selectedStory.items[selectedStory.currentIndex] && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="flex justify-between items-center p-4 absolute top-0 w-full z-10 bg-gradient-to-b from-black/60 to-transparent">
+          
+          {/* Barres de progression */}
+          <div className="absolute top-0 left-0 w-full z-20 flex space-x-1 p-2 pt-4">
+            {selectedStory.items.map((_, idx) => (
+              <div key={idx} className="flex-1 h-1 bg-gray-600 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full bg-white ${idx < selectedStory.currentIndex ? 'w-full' : idx === selectedStory.currentIndex ? 'w-1/2' : 'w-0'}`} 
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* En-tête (Utilisateur + Bouton fermer) */}
+          <div className="flex justify-between items-center p-4 absolute top-4 w-full z-20 bg-gradient-to-b from-black/60 to-transparent">
             <div className="flex items-center">
               <img 
                 src={selectedStory.user?.profile_pic_url} 
                 className="w-8 h-8 rounded-full border border-zinc-700 mr-2" 
                 referrerPolicy="no-referrer"
               />
-              <span className="font-bold text-white drop-shadow-md">{selectedStory.user?.username}</span>
+              <span className="font-bold text-white drop-shadow-md text-sm">{selectedStory.user?.username}</span>
+              <span className="text-zinc-300 text-xs ml-2 drop-shadow-md">
+                {Math.round((Date.now()/1000 - selectedStory.items[selectedStory.currentIndex].taken_at) / 3600)}h
+              </span>
             </div>
-            <button onClick={closeStory} className="text-white text-4xl font-bold hover:text-gray-300 drop-shadow-md pb-1">
+            <button onClick={closeStory} className="text-white text-3xl font-bold hover:text-gray-300 drop-shadow-md">
               &times;
             </button>
           </div>
           
-          <div className="flex-1 flex items-center justify-center bg-zinc-950 relative">
-            {selectedStory.video_versions && selectedStory.video_versions.length > 0 ? (
+          {/* Zones de clic invisibles pour naviguer */}
+          <div className="absolute inset-0 z-10 flex">
+            <div className="w-1/3 h-full cursor-pointer" onClick={prevStoryItem} />
+            <div className="w-2/3 h-full cursor-pointer" onClick={nextStoryItem} />
+          </div>
+
+          {/* Contenu de la story */}
+          <div className="flex-1 flex items-center justify-center bg-zinc-950 relative w-full h-full">
+            {selectedStory.items[selectedStory.currentIndex].video_versions && selectedStory.items[selectedStory.currentIndex].video_versions.length > 0 ? (
               <video 
-                src={selectedStory.video_versions[0]?.url} 
-                className="max-h-full max-w-full object-contain"
+                src={selectedStory.items[selectedStory.currentIndex].video_versions[0]?.url} 
+                className="max-h-full max-w-full object-contain pointer-events-none"
                 autoPlay 
-                controls 
                 playsInline
                 referrerPolicy="no-referrer"
+                onEnded={nextStoryItem}
               />
             ) : (
               <img 
-                src={selectedStory.image_versions2?.candidates[0]?.url} 
-                className="max-h-full max-w-full object-contain"
+                src={selectedStory.items[selectedStory.currentIndex].image_versions2?.candidates[0]?.url} 
+                className="max-h-full max-w-full object-contain pointer-events-none"
                 alt="Story"
                 referrerPolicy="no-referrer"
               />
             )}
+          </div>
+
+          {/* Barre du bas : Répondre et Liker */}
+          <div className="absolute bottom-0 w-full p-4 z-20 bg-gradient-to-t from-black/80 to-transparent flex items-center space-x-4">
+            <form onSubmit={handleReply} className="flex-1">
+              <input 
+                type="text" 
+                placeholder={`Répondre à ${selectedStory.user?.username}...`}
+                className="w-full bg-transparent border border-white rounded-full py-2 px-4 text-white text-sm focus:outline-none focus:bg-zinc-900/50 transition-colors placeholder-gray-300"
+              />
+            </form>
+            <button onClick={handleLike} className="text-white hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+              </svg>
+            </button>
+            <button className="text-white hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
