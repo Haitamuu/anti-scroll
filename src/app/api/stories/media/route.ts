@@ -13,26 +13,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
   }
 
-  const dummyCsrf = 'dummy_csrf_token_12345';
-
   try {
-    const response = await fetch(`https://www.instagram.com/api/v1/feed/reels_media/?reel_ids=${reelId}`, {
+    // On utilise l'API mobile i.instagram.com pour récupérer les médias, 
+    // car l'API Web reels_media redirige souvent de manière agressive.
+    const response = await fetch(`https://i.instagram.com/api/v1/feed/reels_media/?reel_ids=${reelId}`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'X-IG-App-ID': '936619743392459',
-        'X-ASBD-ID': '129477',
-        'X-CSRFToken': dummyCsrf,
-        'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://www.instagram.com',
-        'Referer': 'https://www.instagram.com/',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Cookie': `sessionid=${sessionId}; csrftoken=${dummyCsrf}`
-      }
+        'User-Agent': 'Instagram 219.0.0.12.117 Android',
+        'X-IG-App-ID': '1217981644879628', // ID de l'app mobile Instagram (Android)
+        'Cookie': `sessionid=${sessionId}`
+      },
+      redirect: 'manual'
     });
 
     if (!response.ok) {
+      if (response.status === 301 || response.status === 302) {
+        return NextResponse.json({ error: 'Redirected (Unauthorized)', details: response.headers.get('location') }, { status: 401 });
+      }
       const text = await response.text();
       return NextResponse.json({ error: `Erreur IG ${response.status}`, details: text }, { status: response.status });
     }

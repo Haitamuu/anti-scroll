@@ -86,15 +86,15 @@ export default function Home() {
   const openStory = async (story: any) => {
     setStoryLoading(true);
     try {
-      // 1. Récupérer les médias de cette story précise
       const res = await fetch(`/api/stories/media?id=${story.id}`, {
         headers: { "x-ig-session": sessionId },
       });
       const data = await res.json();
       
-      if (res.ok && data.reels && data.reels[story.id] && data.reels[story.id].items.length > 0) {
+      if (!res.ok) {
+        alert("Erreur Instagram lors du chargement des photos/vidéos de la story : " + JSON.stringify(data));
+      } else if (data.reels && data.reels[story.id] && data.reels[story.id].items.length > 0) {
         const items = data.reels[story.id].items;
-        // On prend le premier élément non lu, ou le dernier si tout est lu
         let itemToShow = items[0];
         for (let i = 0; i < items.length; i++) {
           if (items[i].taken_at > story.seen) {
@@ -104,7 +104,8 @@ export default function Home() {
         }
         setSelectedStory({ ...itemToShow, user: story.user });
       } else {
-        alert("Cette story est vide ou a expiré.");
+        // Affiche ce qu'Instagram a réellement renvoyé pour débugger
+        alert("Structure inattendue ou vide : " + JSON.stringify(data).substring(0, 300));
       }
     } catch (err) {
       alert("Erreur de connexion pour charger la story.");
