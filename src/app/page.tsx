@@ -12,6 +12,7 @@ export default function Home() {
   const [error, setError] = useState("");
   
   const [selectedStory, setSelectedStory] = useState<any>(null);
+  const [storyLoading, setStoryLoading] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("ig_sessionid");
@@ -55,7 +56,7 @@ export default function Home() {
       if (res.ok) {
         setMessages(data);
       } else {
-        setError(`Erreur: ${data.error} - ${data.details || ''}`);
+        setError(`Erreur Messages: ${data.error} - ${data.details || ''}`);
       }
     } catch (err) {
       setError("Erreur réseau");
@@ -74,7 +75,7 @@ export default function Home() {
       if (res.ok) {
         setStories(data);
       } else {
-        setError(`Erreur: ${data.error} - ${data.details || ''}`);
+        setError(`Erreur Stories: ${data.error} - ${data.details || ''}`);
       }
     } catch (err) {
       setError("Erreur réseau");
@@ -82,14 +83,33 @@ export default function Home() {
     setLoading(false);
   };
   
-  const openStory = (story: any) => {
-    if (story.items && story.items.length > 0) {
-      // Pour pouvoir relire, on donne toujours accès à la première (ou on pourrait chercher la non-lue)
-      // On sélectionne le premier item avec les informations de l'utilisateur
-      setSelectedStory({ ...story.items[0], user: story.user });
-    } else {
-      alert("Cette story est vide ou a expiré.");
+  const openStory = async (story: any) => {
+    setStoryLoading(true);
+    try {
+      // 1. Récupérer les médias de cette story précise
+      const res = await fetch(`/api/stories/media?id=${story.id}`, {
+        headers: { "x-ig-session": sessionId },
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.reels && data.reels[story.id] && data.reels[story.id].items.length > 0) {
+        const items = data.reels[story.id].items;
+        // On prend le premier élément non lu, ou le dernier si tout est lu
+        let itemToShow = items[0];
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].taken_at > story.seen) {
+            itemToShow = items[i];
+            break;
+          }
+        }
+        setSelectedStory({ ...itemToShow, user: story.user });
+      } else {
+        alert("Cette story est vide ou a expiré.");
+      }
+    } catch (err) {
+      alert("Erreur de connexion pour charger la story.");
     }
+    setStoryLoading(false);
   };
 
   const closeStory = () => {
@@ -185,29 +205,30 @@ export default function Home() {
         )}
 
         {activeTab === "stories" && stories?.tray && (
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-            {stories.tray.map((story: any) => {
-              // Vérifie si la story a été entièrement vue
-              // "seen" contient le timestamp du dernier item vu. S'il est égal ou supérieur au dernier, tout est vu.
-              const isSeen = story.seen >= story.latest_reel_media;
-              
-              return (
-                <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center cursor-pointer">
-                  <div className={`w-16 h-16 rounded-full p-[2px] mb-1 hover:scale-105 transition-transform ${isSeen ? 'bg-zinc-700' : 'bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600'}`}>
-                    <img
-                      src={story.user?.profile_pic_url || "/default-avatar.png"}
-                      alt="avatar"
-                      className="w-full h-full rounded-full border-2 border-black object-cover bg-zinc-800"
-                      referrerPolicy="no-referrer"
-                    />
+          <>
+            {storyLoading && <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center text-white">Chargement de la story...</div>}
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+              {stories.tray.map((story: any) => {
+                const isSeen = story.seen >= story.latest_reel_media;
+                
+                return (
+                  <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center cursor-pointer">
+                    <div className={`w-16 h-16 rounded-full p-[2px] mb-1 hover:scale-105 transition-transform ${isSeen ? 'bg-zinc-700' : 'bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600'}`}>
+                      <img
+                        src={story.user?.profile_pic_url || "/default-avatar.png"}
+                        alt="avatar"
+                        className="w-full h-full rounded-full border-2 border-black object-cover bg-zinc-800"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <span className={`text-xs truncate w-full text-center mt-1 ${isSeen ? 'text-zinc-500' : 'text-zinc-300'}`}>
+                      {story.user?.username}
+                    </span>
                   </div>
-                  <span className={`text-xs truncate w-full text-center mt-1 ${isSeen ? 'text-zinc-500' : 'text-zinc-300'}`}>
-                    {story.user?.username}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </main>
 
@@ -229,12 +250,13 @@ export default function Home() {
           </div>
           
           <div className="flex-1 flex items-center justify-center bg-zinc-950 relative">
-            {selectedStory.video_versions ? (
+            {selectedStory.video_versions && selectedStory.video_versions.length > 0 ? (
               <video 
                 src={selectedStory.video_versions[0]?.url} 
                 className="max-h-full max-w-full object-contain"
                 autoPlay 
                 controls 
+                playsInline
                 referrerPolicy="no-referrer"
               />
             ) : (
