@@ -17,6 +17,11 @@ export async function GET(request: Request) {
         'X-ASBD-ID': '129477',
         'X-CSRFToken': dummyCsrf,
         'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://www.instagram.com',
+        'Referer': 'https://www.instagram.com/',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
         'Cookie': `sessionid=${sessionId}; csrftoken=${dummyCsrf}`
       }
     });

@@ -82,25 +82,25 @@ export default function Home() {
 
   if (!isLogged) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-          <h1 className="text-3xl font-bold text-center text-pink-600 mb-6">InstaFocus</h1>
-          <p className="text-gray-500 mb-6 text-sm text-center">
-            Connectez-vous en utilisant votre <b>sessionid</b> Instagram.
+      <div className="min-h-screen flex items-center justify-center bg-black p-4 text-white">
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-lg w-full max-w-md">
+          <h1 className="text-3xl font-bold text-center text-white mb-6 font-serif italic">InstaFocus</h1>
+          <p className="text-zinc-400 mb-6 text-sm text-center">
+            Connectez-vous avec votre <b>sessionid</b> pour accéder à vos messages sans le feed.
           </p>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Cookie sessionid</label>
+              <label className="block text-sm font-medium text-zinc-300">Cookie sessionid</label>
               <input
                 type="password"
                 value={sessionId}
                 onChange={(e) => setSessionId(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-3 border focus:border-pink-500 focus:ring-pink-500"
+                className="mt-1 block w-full rounded-md bg-zinc-800 border-zinc-700 text-white shadow-sm p-3 focus:border-white focus:ring-white"
                 placeholder="Ex: 12345678%3A..."
                 required
               />
             </div>
-            <button type="submit" className="w-full bg-pink-600 text-white p-3 rounded-md font-semibold hover:bg-pink-700">
+            <button type="submit" className="w-full bg-white text-black p-3 rounded-md font-bold hover:bg-gray-200 transition-colors">
               Se connecter
             </button>
           </form>
@@ -110,27 +110,27 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
-      <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-pink-600">InstaFocus</h1>
-        <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-800">
+    <div className="flex flex-col h-screen bg-black text-white">
+      <header className="bg-black border-b border-zinc-800 p-4 flex justify-between items-center sticky top-0 z-10">
+        <h1 className="text-xl font-bold text-white font-serif italic">InstaFocus</h1>
+        <button onClick={handleLogout} className="text-sm text-zinc-400 hover:text-white transition-colors">
           Déconnexion
         </button>
       </header>
 
-      <div className="flex bg-white border-b border-gray-200">
+      <div className="flex bg-black border-b border-zinc-800">
         <button
           onClick={() => setActiveTab("messages")}
-          className={`flex-1 py-3 text-center font-medium text-sm transition-colors ${
-            activeTab === "messages" ? "border-b-2 border-pink-600 text-pink-600" : "text-gray-500"
+          className={`flex-1 py-3 text-center font-semibold text-sm transition-colors ${
+            activeTab === "messages" ? "border-b-2 border-white text-white" : "text-zinc-500"
           }`}
         >
           Messages
         </button>
         <button
           onClick={() => setActiveTab("stories")}
-          className={`flex-1 py-3 text-center font-medium text-sm transition-colors ${
-            activeTab === "stories" ? "border-b-2 border-pink-600 text-pink-600" : "text-gray-500"
+          className={`flex-1 py-3 text-center font-semibold text-sm transition-colors ${
+            activeTab === "stories" ? "border-b-2 border-white text-white" : "text-zinc-500"
           }`}
         >
           Stories
@@ -138,9 +138,9 @@ export default function Home() {
       </div>
 
       <main className="flex-1 overflow-y-auto p-4">
-        {loading && <p className="text-center text-gray-500 mt-4">Chargement...</p>}
+        {loading && <p className="text-center text-zinc-500 mt-4">Chargement...</p>}
         {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-md mt-4 text-xs font-mono break-all whitespace-pre-wrap">
+          <div className="bg-red-900/50 border border-red-800 text-red-200 p-4 rounded-md mt-4 text-xs font-mono break-all whitespace-pre-wrap">
             {error}
           </div>
         )}
@@ -148,18 +148,18 @@ export default function Home() {
         {activeTab === "messages" && messages?.inbox?.threads && (
           <div className="space-y-4">
             {messages.inbox.threads.map((thread: any) => (
-              <div key={thread.thread_id} className="flex items-center p-3 bg-white rounded-lg shadow-sm">
+              <div key={thread.thread_id} className="flex items-center p-3 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
                 <img
                   src={thread.users[0]?.profile_pic_url || "/default-avatar.png"}
                   alt="avatar"
-                  className="w-12 h-12 rounded-full mr-4 bg-gray-200"
+                  className="w-14 h-14 rounded-full mr-4 bg-zinc-800 border border-zinc-700"
                   referrerPolicy="no-referrer"
                 />
                 <div className="flex-1 overflow-hidden">
-                  <h3 className="font-semibold text-gray-900 truncate">
+                  <h3 className="font-semibold text-white truncate">
                     {thread.thread_title || thread.users[0]?.username}
                   </h3>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="text-sm text-zinc-400 truncate mt-1">
                     {thread.last_permanent_item?.text || "Nouveau message"}
                   </p>
                 </div>
@@ -169,18 +169,18 @@ export default function Home() {
         )}
 
         {activeTab === "stories" && stories?.tray && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
             {stories.tray.map((story: any) => (
-              <div key={story.id} className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-pink-600 mb-1">
+              <div key={story.id} className="flex flex-col items-center cursor-pointer">
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600 mb-1">
                   <img
                     src={story.user?.profile_pic_url || "/default-avatar.png"}
                     alt="avatar"
-                    className="w-full h-full rounded-full border-2 border-white object-cover bg-white"
+                    className="w-full h-full rounded-full border-2 border-black object-cover bg-zinc-800"
                     referrerPolicy="no-referrer"
                   />
                 </div>
-                <span className="text-xs text-gray-700 truncate w-full text-center">
+                <span className="text-xs text-zinc-300 truncate w-full text-center mt-1">
                   {story.user?.username}
                 </span>
               </div>

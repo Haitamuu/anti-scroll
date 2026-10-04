@@ -7,7 +7,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Session ID is required' }, { status: 401 });
   }
 
-  // Astuce : un faux csrftoken fonctionne souvent si on le met à la fois dans le cookie et le header
   const dummyCsrf = 'dummy_csrf_token_12345';
 
   try {
@@ -18,20 +17,23 @@ export async function GET(request: Request) {
         'X-ASBD-ID': '129477',
         'X-CSRFToken': dummyCsrf,
         'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://www.instagram.com',
+        'Referer': 'https://www.instagram.com/direct/inbox/',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
         'Cookie': `sessionid=${sessionId}; csrftoken=${dummyCsrf}`
       }
     });
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("Erreur IG:", response.status, text);
       return NextResponse.json({ error: `Erreur IG ${response.status}`, details: text }, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error("Erreur Interne:", error);
     return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
   }
 }
