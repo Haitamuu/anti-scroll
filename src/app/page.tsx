@@ -10,6 +10,9 @@ export default function Home() {
   const [stories, setStories] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Modal state for stories
+  const [selectedStory, setSelectedStory] = useState<any>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("ig_sessionid");
@@ -79,6 +82,19 @@ export default function Home() {
     }
     setLoading(false);
   };
+  
+  const openStory = (story: any) => {
+    // story.items contient les photos/vidéos
+    if (story.items && story.items.length > 0) {
+      setSelectedStory(story.items[0]); // Ouvre la première photo/vidéo de la story
+    } else {
+      alert("Cette story est vide ou a expiré.");
+    }
+  };
+
+  const closeStory = () => {
+    setSelectedStory(null);
+  };
 
   if (!isLogged) {
     return (
@@ -110,7 +126,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="flex flex-col h-screen bg-black text-white relative">
       <header className="bg-black border-b border-zinc-800 p-4 flex justify-between items-center sticky top-0 z-10">
         <h1 className="text-xl font-bold text-white font-serif italic">InstaFocus</h1>
         <button onClick={handleLogout} className="text-sm text-zinc-400 hover:text-white transition-colors">
@@ -171,8 +187,8 @@ export default function Home() {
         {activeTab === "stories" && stories?.tray && (
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
             {stories.tray.map((story: any) => (
-              <div key={story.id} className="flex flex-col items-center cursor-pointer">
-                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600 mb-1">
+              <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center cursor-pointer">
+                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600 mb-1 hover:scale-105 transition-transform">
                   <img
                     src={story.user?.profile_pic_url || "/default-avatar.png"}
                     alt="avatar"
@@ -188,6 +204,44 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Modal Story Viewer */}
+      {selectedStory && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex justify-between items-center p-4 absolute top-0 w-full z-10">
+            <div className="flex items-center">
+              <img 
+                src={selectedStory.user?.profile_pic_url} 
+                className="w-8 h-8 rounded-full border border-zinc-700 mr-2" 
+                referrerPolicy="no-referrer"
+              />
+              <span className="font-bold text-white shadow-sm">{selectedStory.user?.username}</span>
+            </div>
+            <button onClick={closeStory} className="text-white text-3xl font-bold hover:text-gray-300 drop-shadow-md">
+              &times;
+            </button>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center bg-zinc-900 relative">
+            {selectedStory.video_versions ? (
+              <video 
+                src={selectedStory.video_versions[0]?.url} 
+                className="max-h-full max-w-full object-contain"
+                autoPlay 
+                controls 
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <img 
+                src={selectedStory.image_versions2?.candidates[0]?.url} 
+                className="max-h-full max-w-full object-contain"
+                alt="Story"
+                referrerPolicy="no-referrer"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
