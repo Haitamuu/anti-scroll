@@ -11,7 +11,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Modal state for stories
   const [selectedStory, setSelectedStory] = useState<any>(null);
 
   useEffect(() => {
@@ -84,9 +83,10 @@ export default function Home() {
   };
   
   const openStory = (story: any) => {
-    // story.items contient les photos/vidéos
     if (story.items && story.items.length > 0) {
-      setSelectedStory(story.items[0]); // Ouvre la première photo/vidéo de la story
+      // Pour pouvoir relire, on donne toujours accès à la première (ou on pourrait chercher la non-lue)
+      // On sélectionne le premier item avec les informations de l'utilisateur
+      setSelectedStory({ ...story.items[0], user: story.user });
     } else {
       alert("Cette story est vide ou a expiré.");
     }
@@ -175,7 +175,7 @@ export default function Home() {
                   <h3 className="font-semibold text-white truncate">
                     {thread.thread_title || thread.users[0]?.username}
                   </h3>
-                  <p className="text-sm text-zinc-400 truncate mt-1">
+                  <p className={`text-sm truncate mt-1 ${thread.read_state ? 'text-zinc-500' : 'text-white font-bold'}`}>
                     {thread.last_permanent_item?.text || "Nouveau message"}
                   </p>
                 </div>
@@ -186,21 +186,27 @@ export default function Home() {
 
         {activeTab === "stories" && stories?.tray && (
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-            {stories.tray.map((story: any) => (
-              <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center cursor-pointer">
-                <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600 mb-1 hover:scale-105 transition-transform">
-                  <img
-                    src={story.user?.profile_pic_url || "/default-avatar.png"}
-                    alt="avatar"
-                    className="w-full h-full rounded-full border-2 border-black object-cover bg-zinc-800"
-                    referrerPolicy="no-referrer"
-                  />
+            {stories.tray.map((story: any) => {
+              // Vérifie si la story a été entièrement vue
+              // "seen" contient le timestamp du dernier item vu. S'il est égal ou supérieur au dernier, tout est vu.
+              const isSeen = story.seen >= story.latest_reel_media;
+              
+              return (
+                <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center cursor-pointer">
+                  <div className={`w-16 h-16 rounded-full p-[2px] mb-1 hover:scale-105 transition-transform ${isSeen ? 'bg-zinc-700' : 'bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600'}`}>
+                    <img
+                      src={story.user?.profile_pic_url || "/default-avatar.png"}
+                      alt="avatar"
+                      className="w-full h-full rounded-full border-2 border-black object-cover bg-zinc-800"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <span className={`text-xs truncate w-full text-center mt-1 ${isSeen ? 'text-zinc-500' : 'text-zinc-300'}`}>
+                    {story.user?.username}
+                  </span>
                 </div>
-                <span className="text-xs text-zinc-300 truncate w-full text-center mt-1">
-                  {story.user?.username}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
@@ -208,21 +214,21 @@ export default function Home() {
       {/* Modal Story Viewer */}
       {selectedStory && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="flex justify-between items-center p-4 absolute top-0 w-full z-10">
+          <div className="flex justify-between items-center p-4 absolute top-0 w-full z-10 bg-gradient-to-b from-black/60 to-transparent">
             <div className="flex items-center">
               <img 
                 src={selectedStory.user?.profile_pic_url} 
                 className="w-8 h-8 rounded-full border border-zinc-700 mr-2" 
                 referrerPolicy="no-referrer"
               />
-              <span className="font-bold text-white shadow-sm">{selectedStory.user?.username}</span>
+              <span className="font-bold text-white drop-shadow-md">{selectedStory.user?.username}</span>
             </div>
-            <button onClick={closeStory} className="text-white text-3xl font-bold hover:text-gray-300 drop-shadow-md">
+            <button onClick={closeStory} className="text-white text-4xl font-bold hover:text-gray-300 drop-shadow-md pb-1">
               &times;
             </button>
           </div>
           
-          <div className="flex-1 flex items-center justify-center bg-zinc-900 relative">
+          <div className="flex-1 flex items-center justify-center bg-zinc-950 relative">
             {selectedStory.video_versions ? (
               <video 
                 src={selectedStory.video_versions[0]?.url} 
