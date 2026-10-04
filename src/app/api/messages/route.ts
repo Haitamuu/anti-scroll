@@ -10,7 +10,8 @@ export async function GET(request: Request) {
   const dummyCsrf = 'dummy_csrf_token_12345';
 
   try {
-    const response = await fetch('https://www.instagram.com/api/v1/direct_v2/inbox/?persistentBadging=true&folder=0&limit=10', {
+    // Note: Utilisation de /web/inbox/ pour les sessions web
+    const response = await fetch('https://www.instagram.com/api/v1/direct_v2/web/inbox/?persistentBadging=true&folder=0&limit=10&thread_message_limit=10', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'X-IG-App-ID': '936619743392459',
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
         'Sec-Fetch-Site': 'same-origin',
         'Cookie': `sessionid=${sessionId}; csrftoken=${dummyCsrf}`
       },
-      redirect: 'manual' // Prevent fetch from crashing on instagram:// deep links
+      redirect: 'manual'
     });
 
     if (!response.ok) {
