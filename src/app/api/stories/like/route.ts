@@ -23,14 +23,25 @@ export async function POST(request: Request) {
     // 2. Génération d'un UUID unique pour simuler un vrai appareil mobile
     const uuid = crypto.randomUUID();
 
-    // 3. Construction du corps de la requête EXACTEMENT comme l'application Android
-    const body = new URLSearchParams({
-      media_id: mediaId,
+    // 3. Construction du payload complet
+    const payloadObj = {
       _csrftoken: csrfToken,
       _uid: uid,
       _uuid: uuid,
+      media_id: mediaId,
       module_name: 'viewer_story',
       radio_type: 'wifi-none'
+    };
+    const payloadStr = JSON.stringify(payloadObj);
+
+    // 4. Signature cryptographique (HMAC-SHA256) du payload pour l'API Mobile
+    // L'API mobile rejette (souvent avec un message générique) les POST non signés.
+    const IG_SIG_KEY = '5ad7d6f013666cc93c88fc8af940348bd067b68f0dce3c85122a923f4f74b251'; // Clé publique standard v4
+    const signature = crypto.createHmac('sha256', IG_SIG_KEY).update(payloadStr).digest('hex');
+
+    const body = new URLSearchParams({
+      ig_sig_key_version: '4',
+      signed_body: `${signature}.${payloadStr}`
     });
 
     // 4. L'empreinte de la VRAIE application Android (très important pour l'API Mobile)
