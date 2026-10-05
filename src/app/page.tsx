@@ -175,13 +175,14 @@ export default function Home() {
         body: JSON.stringify({ mediaId })
       });
       
-      if (!res.ok) {
-        const errData = await res.json();
-        console.error("Like error:", errData);
+      const resData = await res.json();
+      
+      if (!res.ok || resData.status !== "ok") {
+        console.error("Like error:", resData);
         // Si erreur, on annule l'interface
         newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: false };
         setSelectedStory({ ...selectedStory, items: newItems });
-        alert(`Échec du like. IG dit : ${errData.error}\nDétails : ${errData.details ? errData.details.substring(0, 100) : 'Aucun'}`);
+        alert(`Échec du like. IG dit : ${resData.message || resData.error || 'Erreur inconnue'}\nDétails : ${JSON.stringify(resData).substring(0, 100)}`);
       }
     } catch (err) {
       console.error(err);
