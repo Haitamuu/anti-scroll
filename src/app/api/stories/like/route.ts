@@ -22,7 +22,8 @@ export async function POST(request: Request) {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        media_id: mediaId
+        media_id: mediaId,
+        container_module: 'reel_feed_timeline'
       })
     });
 

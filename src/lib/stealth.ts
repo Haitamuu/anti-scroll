@@ -46,6 +46,7 @@ export async function getStealthHeaders(request: Request, sessionId: string, req
       'sec-ch-ua-platform': secChUaPlatform,
       'X-IG-App-ID': '936619743392459',
       'X-ASBD-ID': '129477',
+      'X-Instagram-AJAX': '1',
       'X-Requested-With': 'XMLHttpRequest',
       'Origin': 'https://www.instagram.com',
       'Referer': 'https://www.instagram.com/',
