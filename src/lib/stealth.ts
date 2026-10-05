@@ -8,12 +8,11 @@ export async function getStealthHeaders(request: Request, sessionId: string, req
   const secChUaMobile = request.headers.get('sec-ch-ua-mobile') || '?1';
   const secChUaPlatform = request.headers.get('sec-ch-ua-platform') || '"iOS"';
 
-  let csrfToken = '';
+  // 3. ANOMALIE CORRIGÉE : Utilisation du VRAI jeton CSRF fourni par l'utilisateur
+  let csrfToken = request.headers.get('x-ig-csrf') || '';
 
-  if (requireCsrf) {
-    // IG (Django) valide le CSRF simplement en vérifiant que X-CSRFToken == cookie(csrftoken).
-    // Sur Vercel, faire un fetch() vers instagram.com est souvent bloqué (redirection vers login),
-    // donc on ne récupérait pas de vrai token. À la place, on génère un token aléatoire valide.
+  if (requireCsrf && !csrfToken) {
+    // Fallback d'urgence (qui risque de faire une erreur 400/500 sur l'API Web)
     csrfToken = 'abcdefghijklmnopqrstuvwxyz123456'; 
   }
 

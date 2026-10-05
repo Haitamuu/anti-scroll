@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 
 export default function Home() {
   const [sessionId, setSessionId] = useState("");
+  const [csrfToken, setCsrfToken] = useState("");
   const [isLogged, setIsLogged] = useState(false);
+  
   const [stories, setStories] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -16,11 +18,17 @@ export default function Home() {
   const [localSeen, setLocalSeen] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const stored = localStorage.getItem("ig_sessionid");
-    if (stored) {
-      setSessionId(stored);
+    const storedSession = localStorage.getItem("ig_sessionid");
+    const storedCsrf = localStorage.getItem("ig_csrftoken");
+    
+    if (storedSession) {
+      setSessionId(storedSession);
       setIsLogged(true);
     }
+    if (storedCsrf) {
+      setCsrfToken(storedCsrf);
+    }
+    
     const storedSeen = localStorage.getItem("insta_seen");
     if (storedSeen) {
       setLocalSeen(JSON.parse(storedSeen));
@@ -62,13 +70,18 @@ export default function Home() {
     e.preventDefault();
     if (sessionId.trim()) {
       localStorage.setItem("ig_sessionid", sessionId.trim());
+      if (csrfToken.trim()) {
+        localStorage.setItem("ig_csrftoken", csrfToken.trim());
+      }
       setIsLogged(true);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("ig_sessionid");
+    localStorage.removeItem("ig_csrftoken");
     setSessionId("");
+    setCsrfToken("");
     setIsLogged(false);
     setStories(null);
   };
@@ -78,7 +91,10 @@ export default function Home() {
     setError("");
     try {
       const res = await fetch("/api/stories", {
-        headers: { "x-ig-session": sessionId },
+        headers: { 
+          "x-ig-session": sessionId,
+          "x-ig-csrf": csrfToken
+        },
       });
       const data = await res.json();
       if (res.ok) {
@@ -96,7 +112,10 @@ export default function Home() {
     setStoryLoading(true);
     try {
       const res = await fetch(`/api/stories/media?id=${story.id}`, {
-        headers: { "x-ig-session": sessionId },
+        headers: { 
+          "x-ig-session": sessionId,
+          "x-ig-csrf": csrfToken
+        },
       });
       const data = await res.json();
       
@@ -148,6 +167,11 @@ export default function Home() {
   const handleLike = async () => {
     if (!selectedStory || isLiking) return;
     
+    if (!csrfToken) {
+      alert("Veuillez vous déconnecter et ajouter votre jeton CSRF (csrftoken) dans le formulaire de connexion pour pouvoir liker.");
+      return;
+    }
+
     const currentItem = selectedStory.items[selectedStory.currentIndex];
     const mediaId = currentItem.id;
     const currentlyLiked = currentItem.has_liked;
@@ -170,7 +194,8 @@ export default function Home() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-ig-session": sessionId
+          "x-ig-session": sessionId,
+          "x-ig-csrf": csrfToken
         },
         body: JSON.stringify({ mediaId })
       });
@@ -215,9 +240,16 @@ export default function Home() {
                 type="password"
                 value={sessionId}
                 onChange={(e) => setSessionId(e.target.value)}
-                className="block w-full rounded-lg bg-zinc-800 border-zinc-700 text-white shadow-sm p-4 text-base focus:border-white focus:ring-white outline-none"
+                className="block w-full rounded-lg bg-zinc-800 border-zinc-700 text-white shadow-sm p-4 text-base focus:border-white focus:ring-white outline-none mb-4"
                 placeholder="Cookie sessionid"
                 required
+              />
+              <input
+                type="text"
+                value={csrfToken}
+                onChange={(e) => setCsrfToken(e.target.value)}
+                className="block w-full rounded-lg bg-zinc-800 border-zinc-700 text-white shadow-sm p-4 text-base focus:border-white focus:ring-white outline-none"
+                placeholder="Cookie csrftoken (optionnel)"
               />
             </div>
             <button type="submit" className="w-full bg-white text-black p-4 rounded-lg font-bold text-lg active:scale-95 transition-transform">
