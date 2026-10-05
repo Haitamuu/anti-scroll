@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,38 +14,41 @@ export async function POST(request: Request) {
   if (!mediaId) return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
 
   try {
-    // 1. On retourne sur l'API WEB pure, car l'API mobile a probablement mis à jour ses clés HMAC secrètes.
-    // L'API Web est beaucoup plus indulgente dès lors que l'on donne un VRAI csrfToken (ce que l'utilisateur fait maintenant).
-    const response = await fetch(`https://www.instagram.com/api/v1/story_interactions/send_story_like/`, {
-      method: 'POST',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'X-IG-App-ID': '936619743392459', // App ID officiel Instagram Web Mobile
-        'X-ASBD-ID': '129477',
-        'X-CSRFToken': csrfToken,
-        'X-Instagram-AJAX': '1',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://www.instagram.com',
-        'Referer': `https://www.instagram.com/`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Cookie': `sessionid=${sessionId}; csrftoken=${csrfToken}`
-      },
-      body: new URLSearchParams({
-        media_id: mediaId,
-      })
+    let uid = sessionId.split('%3A')[0];
+    if (uid === sessionId) uid = sessionId.split(':')[0];
+    
+    const uuid = crypto.randomUUID();
+
+    // L'API iOS n'utilise généralement pas de signed_body, un simple POST urlencoded suffit.
+    const body = new URLSearchParams({
+      media_id: mediaId,
+      _csrftoken: csrfToken,
+      _uid: uid,
+      _uuid: uuid,
+      module_name: 'viewer_story'
     });
 
-    const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      return NextResponse.json({ error: "Réponse non-JSON", details: text }, { status: response.status === 200 ? 400 : response.status });
-    }
+    const iosAppUserAgent = 'Instagram 219.0.0.12.117 (iPhone13,3; iOS 15_2; fr_FR; fr-FR; scale=3.00; 1170x2532; 346903215) AppleWebKit/420+';
+
+    const response = await fetch('https://i.instagram.com/api/v1/story_interactions/send_story_like/', {
+      method: 'POST',
+      headers: {
+        'User-Agent': iosAppUserAgent,
+        'X-IG-App-ID': '1217981644879628',
+        'X-IG-Device-ID': uuid,
+        'X-CSRFToken': csrfToken,
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Cookie': `sessionid=${sessionId}; csrftoken=${csrfToken}`,
+        'Accept-Language': 'fr-FR',
+      },
+      body: body
+    });
+
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok || data.status !== 'ok') {
       return NextResponse.json(
-        { error: `Erreur IG Web ${response.status}`, details: data }, 
+        { error: `Erreur IG iOS ${response.status}`, details: data }, 
         { status: response.status === 200 ? 400 : response.status }
       );
     }
