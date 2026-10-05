@@ -254,8 +254,6 @@ export default function Home() {
                 className="h-full w-full object-cover pointer-events-none"
                 autoPlay 
                 playsInline
-                muted={false}
-                referrerPolicy="no-referrer"
                 onEnded={nextStoryItem}
               />
             ) : (
