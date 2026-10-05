@@ -143,12 +143,14 @@ export default function Home() {
       return;
     }
 
+    // Protection anti-spam : on bloque le bouton pendant la requête et on force un délai humain
+    setIsLiking(true);
+
     // Mise à jour de l'UI immédiatement (optimiste)
     const newItems = [...selectedStory.items];
     newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: true };
     setSelectedStory({ ...selectedStory, items: newItems });
     
-    setIsLiking(true);
     try {
       const res = await fetch("/api/stories/like", {
         method: "POST",
@@ -172,7 +174,11 @@ export default function Home() {
       newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: false };
       setSelectedStory({ ...selectedStory, items: newItems });
     }
-    setIsLiking(false);
+    
+    // On libère le bouton après 1 seconde minimum pour éviter le spam
+    setTimeout(() => {
+      setIsLiking(false);
+    }, 1000);
   };
 
   const handleReply = (e: React.FormEvent) => {
