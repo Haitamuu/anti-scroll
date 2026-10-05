@@ -13,11 +13,17 @@ export default function Home() {
   const [storyLoading, setStoryLoading] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
 
+  const [localSeen, setLocalSeen] = useState<Record<string, number>>({});
+
   useEffect(() => {
     const stored = localStorage.getItem("ig_sessionid");
     if (stored) {
       setSessionId(stored);
       setIsLogged(true);
+    }
+    const storedSeen = localStorage.getItem("insta_seen");
+    if (storedSeen) {
+      setLocalSeen(JSON.parse(storedSeen));
     }
   }, []);
 
@@ -27,14 +33,22 @@ export default function Home() {
     }
   }, [isLogged]);
 
-  // Si on est sur le dernier item d'une story, on la marque comme "vue" localement
+  // Si on est sur le dernier item d'une story, on la marque comme "vue" localement (et on sauvegarde)
   useEffect(() => {
     if (selectedStory && selectedStory.items.length > 0) {
       if (selectedStory.currentIndex === selectedStory.items.length - 1) {
         if (stories && stories.tray) {
           const updatedTray = stories.tray.map((s: any) => {
             if (s.id === selectedStory.storyId) {
-              return { ...s, seen: s.latest_reel_media };
+              const newSeenVal = Math.max(s.seen || 0, s.latest_reel_media);
+              
+              setLocalSeen(prev => {
+                const updated = { ...prev, [s.id]: newSeenVal };
+                localStorage.setItem("insta_seen", JSON.stringify(updated));
+                return updated;
+              });
+
+              return { ...s, seen: newSeenVal };
             }
             return s;
           });
@@ -247,11 +261,20 @@ export default function Home() {
             
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-2 gap-y-6 p-2 mt-2">
               {stories.tray.map((story: any) => {
-                const isSeen = story.seen >= story.latest_reel_media;
+                const actualSeen = Math.max(story.seen || 0, localSeen[story.id] || 0);
+                const isSeen = actualSeen >= story.latest_reel_media;
+                const isBesties = story.has_besties_media;
+                
+                let ringClass = "bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600";
+                if (isSeen) {
+                  ringClass = "bg-zinc-700";
+                } else if (isBesties) {
+                  ringClass = "bg-green-500";
+                }
                 
                 return (
                   <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center active:scale-95 transition-transform select-none">
-                    <div className={`w-[72px] h-[72px] rounded-full p-[3px] mb-1 ${isSeen ? 'bg-zinc-700' : 'bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600'}`}>
+                    <div className={`w-[72px] h-[72px] rounded-full p-[3px] mb-1 ${ringClass}`}>
                       <img
                         src={story.user?.profile_pic_url || "/default-avatar.png"}
                         alt="avatar"
