@@ -9,7 +9,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  const [selectedStory, setSelectedStory] = useState<{user: any, items: any[], currentIndex: number} | null>(null);
+  const [selectedStory, setSelectedStory] = useState<{storyId: string, user: any, items: any[], currentIndex: number} | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
 
   useEffect(() => {
@@ -25,6 +25,23 @@ export default function Home() {
       fetchStories();
     }
   }, [isLogged]);
+
+  // Si on est sur le dernier item d'une story, on la marque comme "vue" localement
+  useEffect(() => {
+    if (selectedStory && selectedStory.items.length > 0) {
+      if (selectedStory.currentIndex === selectedStory.items.length - 1) {
+        if (stories && stories.tray) {
+          const updatedTray = stories.tray.map((s: any) => {
+            if (s.id === selectedStory.storyId) {
+              return { ...s, seen: s.latest_reel_media };
+            }
+            return s;
+          });
+          setStories({ ...stories, tray: updatedTray });
+        }
+      }
+    }
+  }, [selectedStory?.currentIndex]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +96,7 @@ export default function Home() {
             break;
           }
         }
-        setSelectedStory({ user: story.user, items: items, currentIndex: startIndex });
+        setSelectedStory({ storyId: story.id, user: story.user, items: items, currentIndex: startIndex });
       } else {
         alert("Cette story est vide ou a expiré.");
       }
