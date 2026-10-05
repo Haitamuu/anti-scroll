@@ -151,10 +151,6 @@ export default function Home() {
     }
   };
 
-  const handleReply = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Bientôt disponible...");
-  };
 
   if (!isLogged) {
     return (
@@ -316,22 +312,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Barre du bas : Répondre et Liker */}
-          <div className="absolute bottom-safe w-full p-4 z-20 bg-gradient-to-t from-black/80 to-transparent flex items-center space-x-4 mb-2">
-            <form onSubmit={handleReply} className="flex-1">
-              <input 
-                type="text" 
-                placeholder={`Envoyer un message...`}
-                className="w-full bg-transparent border border-white/70 rounded-full py-3 px-5 text-white text-base focus:outline-none focus:border-white transition-colors placeholder-white/70 backdrop-blur-sm"
-              />
-            </form>
-
-            <button className="text-white active:scale-75 transition-transform p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 transform rotate-[-45deg] -translate-y-1">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-              </svg>
-            </button>
-          </div>
         </div>
       )}
     </div>
