@@ -11,6 +11,7 @@ export default function Home() {
   
   const [selectedStory, setSelectedStory] = useState<{storyId: string, user: any, items: any[], currentIndex: number} | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("ig_sessionid");
@@ -125,14 +126,53 @@ export default function Home() {
       if (selectedStory.currentIndex > 0) {
         setSelectedStory({ ...selectedStory, currentIndex: selectedStory.currentIndex - 1 });
       } else {
-        // Optionnel : fermer si on est à la première et qu'on clique à gauche
         closeStory();
       }
     }
   };
 
-  const handleLike = () => {
-    alert("Bientôt disponible...");
+  const handleLike = async () => {
+    if (!selectedStory || isLiking) return;
+    
+    const currentItem = selectedStory.items[selectedStory.currentIndex];
+    const mediaId = currentItem.id;
+    const currentlyLiked = currentItem.has_liked;
+
+    if (currentlyLiked) {
+      alert("Retirer un J'aime n'est pas encore supporté ici.");
+      return;
+    }
+
+    // Mise à jour de l'UI immédiatement (optimiste)
+    const newItems = [...selectedStory.items];
+    newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: true };
+    setSelectedStory({ ...selectedStory, items: newItems });
+    
+    setIsLiking(true);
+    try {
+      const res = await fetch("/api/stories/like", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-ig-session": sessionId
+        },
+        body: JSON.stringify({ mediaId })
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Like error:", errData);
+        // Si erreur, on annule l'interface
+        newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: false };
+        setSelectedStory({ ...selectedStory, items: newItems });
+        alert("Impossible de liker cette story (Instagram a bloqué la requête).");
+      }
+    } catch (err) {
+      console.error(err);
+      newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: false };
+      setSelectedStory({ ...selectedStory, items: newItems });
+    }
+    setIsLiking(false);
   };
 
   const handleReply = (e: React.FormEvent) => {
@@ -293,9 +333,15 @@ export default function Home() {
               />
             </form>
             <button onClick={handleLike} className="text-white active:scale-75 transition-transform p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-              </svg>
+              {selectedStory.items[selectedStory.currentIndex].has_liked ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="red" className="w-8 h-8">
+                  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                </svg>
+              )}
             </button>
             <button className="text-white active:scale-75 transition-transform p-1">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 transform rotate-[-45deg] -translate-y-1">
