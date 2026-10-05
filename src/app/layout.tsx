@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "InstaFocus",
+  title: "Anti-Scroll",
   description: "Vos Stories sans distraction",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "InstaFocus",
+    title: "Anti-Scroll",
   },
 };
 

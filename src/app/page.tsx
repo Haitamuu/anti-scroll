@@ -228,57 +228,57 @@ export default function Home() {
 
   if (!isLogged) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-black p-4 text-white">
-        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-lg w-full max-w-sm">
-          <h1 className="text-4xl font-bold text-center text-white mb-2 font-serif italic">InstaFocus</h1>
-          <p className="text-zinc-400 mb-8 text-sm text-center">
-            Vos Stories, sans distractions.
-          </p>
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <input
-                type="password"
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
-                className="block w-full rounded-lg bg-zinc-800 border-zinc-700 text-white shadow-sm p-4 text-base focus:border-white focus:ring-white outline-none mb-4"
-                placeholder="Cookie sessionid"
-                required
-              />
-              <input
-                type="text"
-                value={csrfToken}
-                onChange={(e) => setCsrfToken(e.target.value)}
-                className="block w-full rounded-lg bg-zinc-800 border-zinc-700 text-white shadow-sm p-4 text-base focus:border-white focus:ring-white outline-none"
-                placeholder="Cookie csrftoken (optionnel)"
-              />
+      <div className="min-h-[100dvh] flex flex-col bg-black text-white selection:bg-white selection:text-black">
+        <main className="flex-1 flex flex-col items-center justify-center p-6 w-full max-w-sm mx-auto">
+          <div className="w-full space-y-12">
+            <div className="text-center space-y-3">
+              <h1 className="text-3xl font-semibold tracking-tight">Anti-Scroll</h1>
+              <p className="text-zinc-500 text-sm">Le strict essentiel.</p>
             </div>
-            <button type="submit" className="w-full bg-white text-black p-4 rounded-lg font-bold text-lg active:scale-95 transition-transform">
-              Connexion
-            </button>
-          </form>
-        </div>
+            
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={sessionId}
+                  onChange={(e) => setSessionId(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-white text-base focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all placeholder:text-zinc-600"
+                  placeholder="Collez votre sessionid..."
+                  required
+                />
+              </div>
+              
+              <button 
+                type="submit" 
+                className="w-full bg-white text-black font-medium text-base rounded-xl px-4 py-4 active:scale-[0.98] transition-transform"
+              >
+                Accéder aux Stories
+              </button>
+            </form>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-black text-white relative">
-      <header className="bg-black pt-safe px-4 py-3 flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-2xl font-bold text-white font-serif italic">InstaFocus</h1>
-        <button onClick={handleLogout} className="text-sm font-semibold text-zinc-400 active:text-white">
+    <div className="flex flex-col h-[100dvh] bg-black text-white relative font-sans">
+      <header className="pt-safe flex items-center justify-between px-5 py-4 bg-black/80 backdrop-blur-md sticky top-0 z-10 border-b border-white/5">
+        <h1 className="text-xl font-semibold tracking-tight">Anti-Scroll</h1>
+        <button onClick={handleLogout} className="text-sm font-medium text-zinc-500 hover:text-white transition-colors active:text-white">
           Quitter
         </button>
       </header>
 
       <main className="flex-1 overflow-y-auto pb-safe scrollbar-hide">
         {loading && (
-          <div className="flex justify-center mt-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <div className="flex justify-center mt-20">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
           </div>
         )}
         
         {error && (
-          <div className="bg-red-900/50 text-red-200 p-4 m-4 rounded-lg text-xs font-mono break-all whitespace-pre-wrap">
+          <div className="bg-red-950/30 text-red-400 p-4 mx-5 mt-5 rounded-xl text-sm border border-red-900/50">
             {error}
           </div>
         )}
@@ -286,36 +286,37 @@ export default function Home() {
         {stories?.tray && (
           <>
             {storyLoading && (
-              <div className="fixed inset-0 z-40 bg-black/50 flex flex-col items-center justify-center text-white backdrop-blur-sm">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
-                <p className="font-semibold">Chargement...</p>
+              <div className="fixed inset-0 z-40 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-md">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-4"></div>
               </div>
             )}
             
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-2 gap-y-6 p-2 mt-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-3 gap-y-7 px-4 py-6">
               {stories.tray.map((story: any) => {
                 const actualSeen = Math.max(story.seen || 0, localSeen[story.id] || 0);
                 const isSeen = actualSeen >= story.latest_reel_media;
                 const isBesties = story.has_besties_media;
                 
-                let ringClass = "bg-gradient-to-tr from-yellow-500 via-red-500 to-fuchsia-600";
+                let ringClass = "bg-gradient-to-tr from-yellow-500 via-pink-500 to-fuchsia-600";
                 if (isSeen) {
-                  ringClass = "bg-zinc-700";
+                  ringClass = "bg-zinc-800";
                 } else if (isBesties) {
-                  ringClass = "bg-green-500";
+                  ringClass = "bg-[#65C466]"; // Vert amis proches officiel IG
                 }
                 
                 return (
-                  <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center active:scale-95 transition-transform select-none">
-                    <div className={`w-[72px] h-[72px] rounded-full p-[3px] mb-1 ${ringClass}`}>
-                      <img
-                        src={story.user?.profile_pic_url || "/default-avatar.png"}
-                        alt="avatar"
-                        className="w-full h-full rounded-full border-4 border-black object-cover bg-zinc-800"
-                        referrerPolicy="no-referrer"
-                      />
+                  <div key={story.id} onClick={() => openStory(story)} className="flex flex-col items-center active:scale-95 transition-transform select-none cursor-pointer">
+                    <div className={`w-[76px] h-[76px] rounded-full p-[3px] mb-2 ${ringClass}`}>
+                      <div className="w-full h-full rounded-full p-[2px] bg-black">
+                        <img
+                          src={story.user?.profile_pic_url || "/default-avatar.png"}
+                          alt="avatar"
+                          className="w-full h-full rounded-full object-cover bg-zinc-900"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
                     </div>
-                    <span className={`text-[11px] truncate w-full text-center px-1 ${isSeen ? 'text-zinc-500' : 'text-zinc-200'}`}>
+                    <span className={`text-[11px] font-medium truncate w-full text-center px-1 ${isSeen ? 'text-zinc-600' : 'text-zinc-200'}`}>
                       {story.user?.username}
                     </span>
                   </div>
