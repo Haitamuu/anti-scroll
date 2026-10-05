@@ -38,9 +38,12 @@ export async function getStealthHeaders(request: Request, sessionId: string, req
   };
 
   if (isMobileApi) {
-    // Entêtes pour i.instagram.com (API Mobile)
+    // L'API Mobile (i.instagram.com) refuse les User-Agent de navigateurs web (comme Safari).
+    // Il FAUT lui envoyer l'empreinte de la vraie application Instagram.
+    const mobileAppUserAgent = 'Instagram 219.0.0.12.117 Android';
     return {
       ...baseHeaders,
+      'User-Agent': mobileAppUserAgent,
       'X-IG-App-ID': '1217981644879628',
       'Sec-Fetch-Dest': 'empty',
       'Sec-Fetch-Mode': 'cors',

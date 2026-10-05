@@ -167,7 +167,7 @@ export default function Home() {
         // Si erreur, on annule l'interface
         newItems[selectedStory.currentIndex] = { ...currentItem, has_liked: false };
         setSelectedStory({ ...selectedStory, items: newItems });
-        alert("Impossible de liker cette story (Instagram a bloqué la requête).");
+        alert(`Échec du like. IG dit : ${errData.error}\nDétails : ${errData.details ? errData.details.substring(0, 100) : 'Aucun'}`);
       }
     } catch (err) {
       console.error(err);

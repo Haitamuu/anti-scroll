@@ -9,10 +9,11 @@ export async function POST(request: Request) {
   if (!mediaId) return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
 
   try {
-    // API Web + Récupération automatique du CSRF + Headers usurpés
-    const headers = await getStealthHeaders(request, sessionId, true, false);
+    // Rebasculement sur l'API Mobile (plus permissive sur le CSRF), 
+    // en gardant le système d'IP spoofing de stealth.ts.
+    const headers = await getStealthHeaders(request, sessionId, false, true);
 
-    const response = await fetch('https://www.instagram.com/api/v1/story_interactions/send_story_like/', {
+    const response = await fetch('https://i.instagram.com/api/v1/story_interactions/send_story_like/', {
       method: 'POST',
       headers: {
         ...headers,
