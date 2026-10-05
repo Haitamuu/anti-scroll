@@ -29,7 +29,8 @@ export async function POST(request: Request) {
       _csrftoken: csrfToken,
       _uid: uid,
       _uuid: uuid,
-      container_module: 'reel_feed_timeline'
+      module_name: 'viewer_story',
+      radio_type: 'wifi-none'
     });
 
     // 4. L'empreinte de la VRAIE application Android (très important pour l'API Mobile)
