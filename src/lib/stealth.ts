@@ -41,8 +41,7 @@ export async function getStealthHeaders(request: Request, sessionId: string, isM
       'Referer': 'https://www.instagram.com/',
       'Sec-Fetch-Dest': 'empty',
       'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-      ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {})
+      'Sec-Fetch-Site': 'same-origin'
     };
   }
 }
