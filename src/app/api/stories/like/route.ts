@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,57 +13,38 @@ export async function POST(request: Request) {
   if (!mediaId) return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
 
   try {
-    // 1. Extraction de l'ID utilisateur (_uid) depuis le sessionid
-    let uid = sessionId.split('%3A')[0];
-    if (uid === sessionId) {
-      uid = sessionId.split(':')[0]; // Sécurité si c'est formaté différemment
-    }
-
-    // 2. Génération d'un UUID unique pour simuler un vrai appareil mobile
-    const uuid = crypto.randomUUID();
-
-    // 3. Construction du payload complet
-    const payloadObj = {
-      _csrftoken: csrfToken,
-      _uid: uid,
-      _uuid: uuid,
-      media_id: mediaId,
-      module_name: 'viewer_story',
-      radio_type: 'wifi-none'
-    };
-    const payloadStr = JSON.stringify(payloadObj);
-
-    // 4. Signature cryptographique (HMAC-SHA256) du payload pour l'API Mobile
-    // L'API mobile rejette (souvent avec un message générique) les POST non signés.
-    const IG_SIG_KEY = '5ad7d6f013666cc93c88fc8af940348bd067b68f0dce3c85122a923f4f74b251'; // Clé publique standard v4
-    const signature = crypto.createHmac('sha256', IG_SIG_KEY).update(payloadStr).digest('hex');
-
-    const body = new URLSearchParams({
-      ig_sig_key_version: '4',
-      signed_body: `${signature}.${payloadStr}`
-    });
-
-    // 4. L'empreinte de la VRAIE application Android (très important pour l'API Mobile)
-    const mobileAppUserAgent = 'Instagram 219.0.0.12.117 Android';
-
-    const response = await fetch('https://i.instagram.com/api/v1/story_interactions/send_story_like/', {
+    // 1. On retourne sur l'API WEB pure, car l'API mobile a probablement mis à jour ses clés HMAC secrètes.
+    // L'API Web est beaucoup plus indulgente dès lors que l'on donne un VRAI csrfToken (ce que l'utilisateur fait maintenant).
+    const response = await fetch(`https://www.instagram.com/api/v1/story_interactions/send_story_like/`, {
       method: 'POST',
       headers: {
-        'User-Agent': mobileAppUserAgent,
-        'X-IG-App-ID': '1217981644879628',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'Cookie': `sessionid=${sessionId}; csrftoken=${csrfToken}`,
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'X-IG-App-ID': '936619743392459', // App ID officiel Instagram Web Mobile
+        'X-ASBD-ID': '129477',
+        'X-CSRFToken': csrfToken,
+        'X-Instagram-AJAX': '1',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://www.instagram.com',
+        'Referer': `https://www.instagram.com/`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': `sessionid=${sessionId}; csrftoken=${csrfToken}`
       },
-      body: body
+      body: new URLSearchParams({
+        media_id: mediaId,
+      })
     });
 
-    const data = await response.json().catch(() => ({}));
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return NextResponse.json({ error: "Réponse non-JSON", details: text }, { status: response.status === 200 ? 400 : response.status });
+    }
 
-    // Si le statut HTTP n'est pas bon, ou que l'API a ignoré le like (statut 'fail')
     if (!response.ok || data.status !== 'ok') {
       return NextResponse.json(
-        { error: `Erreur IG ${response.status}`, details: data }, 
+        { error: `Erreur IG Web ${response.status}`, details: data }, 
         { status: response.status === 200 ? 400 : response.status }
       );
     }
