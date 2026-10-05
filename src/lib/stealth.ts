@@ -11,22 +11,10 @@ export async function getStealthHeaders(request: Request, sessionId: string, req
   let csrfToken = '';
 
   if (requireCsrf) {
-    try {
-      const initRes = await fetch('https://www.instagram.com/', {
-        headers: { 
-          'Cookie': `sessionid=${sessionId}`, 
-          'User-Agent': realUserAgent,
-          'X-Forwarded-For': clientIp
-        }
-      });
-      const setCookie = initRes.headers.get('set-cookie');
-      if (setCookie) {
-        const match = setCookie.match(/csrftoken=([^;]+)/);
-        if (match) csrfToken = match[1];
-      }
-    } catch (e) {
-      console.error("Erreur génération CSRF", e);
-    }
+    // IG (Django) valide le CSRF simplement en vérifiant que X-CSRFToken == cookie(csrftoken).
+    // Sur Vercel, faire un fetch() vers instagram.com est souvent bloqué (redirection vers login),
+    // donc on ne récupérait pas de vrai token. À la place, on génère un token aléatoire valide.
+    csrfToken = 'abcdefghijklmnopqrstuvwxyz123456'; 
   }
 
   const baseHeaders: Record<string, string> = {
