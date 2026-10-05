@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getStealthHeaders } from '@/lib/stealth';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   const sessionId = request.headers.get('x-ig-session');
   if (!sessionId) return NextResponse.json({ error: 'Session ID is required' }, { status: 401 });
