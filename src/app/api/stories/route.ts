@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if (!sessionId) return NextResponse.json({ error: 'Session ID is required' }, { status: 401 });
 
   try {
-    const headers = await getStealthHeaders(request, sessionId, false, false);
+    const headers = await getStealthHeaders(request, sessionId, false);
     
     const response = await fetch('https://www.instagram.com/api/v1/feed/reels_tray/', {
       headers: headers

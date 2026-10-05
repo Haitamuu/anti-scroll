@@ -1,28 +1,18 @@
-export async function getStealthHeaders(request: Request, sessionId: string, requireCsrf: boolean = false, isMobileApi: boolean = false) {
+export async function getStealthHeaders(request: Request, sessionId: string, isMobileApi: boolean = false) {
   const realUserAgent = request.headers.get('user-agent') || 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
   const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
 
-  // NOUVELLES PROTECTIONS : Transfert des empreintes de navigateur "Client Hints"
-  // Sans ces entêtes, Instagram sait que c'est un serveur (Node.js/Vercel) qui fait la requête.
   const secChUa = request.headers.get('sec-ch-ua') || '"Chromium";v="122", "Not(A:Brand";v="24"';
   const secChUaMobile = request.headers.get('sec-ch-ua-mobile') || '?1';
   const secChUaPlatform = request.headers.get('sec-ch-ua-platform') || '"iOS"';
-
-  // 3. ANOMALIE CORRIGÉE : Utilisation du VRAI jeton CSRF fourni par l'utilisateur
-  let csrfToken = request.headers.get('x-ig-csrf') || '';
-
-  if (requireCsrf && !csrfToken) {
-    // Fallback d'urgence (qui risque de faire une erreur 400/500 sur l'API Web)
-    csrfToken = 'abcdefghijklmnopqrstuvwxyz123456'; 
-  }
 
   const baseHeaders: Record<string, string> = {
     'User-Agent': realUserAgent,
     'X-Forwarded-For': clientIp,
     'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Accept-Encoding': 'gzip, deflate, br', // Indispensable pour imiter un vrai navigateur
+    'Accept-Encoding': 'gzip, deflate, br',
     'Connection': 'keep-alive',
-    'Cookie': `sessionid=${sessionId}${csrfToken ? `; csrftoken=${csrfToken}` : ''}`
+    'Cookie': `sessionid=${sessionId}`
   };
 
   if (isMobileApi) {

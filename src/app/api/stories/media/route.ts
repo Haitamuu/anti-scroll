@@ -12,8 +12,8 @@ export async function GET(request: Request) {
   if (!reelId) return NextResponse.json({ error: 'Reel ID is required' }, { status: 400 });
 
   try {
-    // Utilisation de la route Mobile avec stealth headers (sans CSRF)
-    const headers = await getStealthHeaders(request, sessionId, false, true);
+    // Utilisation de la route Mobile avec stealth headers
+    const headers = await getStealthHeaders(request, sessionId, true);
 
     const response = await fetch(`https://i.instagram.com/api/v1/feed/reels_media/?reel_ids=${reelId}`, {
       headers: headers,
