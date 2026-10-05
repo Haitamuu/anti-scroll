@@ -19,21 +19,33 @@ export async function POST(request: Request) {
     
     const uuid = crypto.randomUUID();
 
-    // L'API iOS n'utilise généralement pas de signed_body, un simple POST urlencoded suffit.
-    const body = new URLSearchParams({
-      media_id: mediaId,
+    // Construction stricte du payload
+    const payloadObj = {
       _csrftoken: csrfToken,
       _uid: uid,
       _uuid: uuid,
-      module_name: 'viewer_story'
+      media_id: mediaId,
+      module_name: 'viewer_story',
+      radio_type: 'wifi-none'
+    };
+    const payloadStr = JSON.stringify(payloadObj);
+
+    // Clé publique correspondant aux anciennes versions d'Instagram
+    const IG_SIG_KEY = '5ad7d6f013666cc93c88fc8af940348bd067b68f0dce3c85122a923f4f74b251';
+    const signature = crypto.createHmac('sha256', IG_SIG_KEY).update(payloadStr).digest('hex');
+
+    const body = new URLSearchParams({
+      ig_sig_key_version: '4',
+      signed_body: `${signature}.${payloadStr}`
     });
 
-    const iosAppUserAgent = 'Instagram 219.0.0.12.117 (iPhone13,3; iOS 15_2; fr_FR; fr-FR; scale=3.00; 1170x2532; 346903215) AppleWebKit/420+';
+    // Empreinte EXACTE correspondant à la clé IG_SIG_KEY ci-dessus
+    const exactUserAgent = 'Instagram 114.0.0.38.120 Android (28/9; 320dpi; 720x1280; samsung; SM-G930F; heroqltevzw; qcom; en_US; 170469737)';
 
     const response = await fetch('https://i.instagram.com/api/v1/story_interactions/send_story_like/', {
       method: 'POST',
       headers: {
-        'User-Agent': iosAppUserAgent,
+        'User-Agent': exactUserAgent,
         'X-IG-App-ID': '1217981644879628',
         'X-IG-Device-ID': uuid,
         'X-CSRFToken': csrfToken,
@@ -48,7 +60,7 @@ export async function POST(request: Request) {
 
     if (!response.ok || data.status !== 'ok') {
       return NextResponse.json(
-        { error: `Erreur IG iOS ${response.status}`, details: data }, 
+        { error: `Erreur IG Android114 ${response.status}`, details: data }, 
         { status: response.status === 200 ? 400 : response.status }
       );
     }
